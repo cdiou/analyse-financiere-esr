@@ -158,7 +158,92 @@ if not df.empty:
         and not any(ex in e.lower() for ex in ["institut national des sciences appliquées", "insa", "chimie", "ingénieur", "sciences po", "centrale"])
     ]
 
-    # --- AFFICHAGE DES COMMANDES ---
+# BLOC 2C
+    # Configuration du Type Pluridisciplinaire avec santé
+    type_sante_targets = [
+        "Université de Poitiers", "Université Clermont Auvergne", "Université de Bretagne Occidentale", "Université de Brest",
+        "Université Paris-Est Créteil", "Université de Caen Normandie", "Université de Caen", "Université des Antilles",
+        "Université de Tours", "Université de Limoges", "Université de Montpellier", "Aix-Marseille Université",
+        "Université d'Angers", "Université de Reims", "Université de Reims Champagne-Ardenne", "Université de Picardie Jules Verne",
+        "Université d'Amiens", "Université Bourgogne Europe", "Université de Bourgogne", "Université de Dijon",
+        "Université de Strasbourg", "Université Marie et Louis Pasteur", "Université de Franche-Comté", "Université de Besançon",
+        "Université Jean Monnet", "Université Jean Monnet - Saint-Etienne", "Université Jean Monnet Saint-Étienne", "Université de Saint-Etienne",
+        "Nantes Université", "Université de Nantes", "Université de Rouen Normandie", "Université de Rouen", "Université de La Réunion",
+        "Université Sorbonne Paris Nord", "Université Paris-XIII", "Université Paris 13", "Université de Bordeaux", "Sorbonne Université",
+        "Université de Lille", "Université Côte d'Azur", "Université Grenoble Alpes", "Université de Lorraine"
+    ]
+    # SÉCURITÉ : Exclusion chirurgicale de TOUTES les Écoles Nationales Supérieures (ENS), Observatoires, BNU et COMUE
+    type_sante_existants = [
+        e for e in liste_etab 
+        if (e in type_sante_targets or any(t.lower() in e.lower() for t in ["poitiers", "clermont auvergne", "bretagne occidentale", "cr\u00e9teil", "caen normandie", "antilles", "tours", "limoges", "montpellier", "versailles", "aix-marseille", "angers", "reims", "picardie", "bourgogne", "strasbourg", "franche-comt\u00e9", "jean monnet", "nantes", "rouen", "r\u00e9union", "paris nord", "bordeaux", "sorbonne universit\u00e9", "lille", "c\u00f4te d'azur", "grenoble alpes", "lorraine"]))
+        and not any(ex in e.lower() for ex in ["paul-val\u00e9ry", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale sup\u00e9rieure", "ens", "\u00e9cole normale", "biblioth\u00e8que", "bnu", "comue", "observatoire", "sup\u00e9rieur", "g\u00e9ologie", "mines", "ponts", "a\u00e9ronautique"])
+    ]
+
+    # Configuration du Type Pluridisciplinaire sans santé
+    type_sans_sante_targets = [
+        "Université d'Orléans", "Centre universitaire de formation et de recherche de Mayotte", "CUFR de Mayotte",
+        "CY Cergy Paris Université", "Université de Cergy-Pontoise", "Université de Corse Pasquale Paoli", "Université de Corse",
+        "Université Savoie Mont Blanc", "Université de Chambéry", "Université d'Evry Paris-Saclay", "Université d'Evry-Val d'Essonne",
+        "Université Polytechnique Hauts-de-France", "Université polytechnique Hauts-de-France", "Université d'Artois",
+        "Le Mans Université", "Université du Mans", "Avignon Université", "Université d'Avignon", "Université de Haute-Alsace",
+        "Université de Haute Alsace", "Université de Mulhouse", "Université de Toulon", "Université de la Nouvelle-Calédonie",
+        "Université de la Polynésie Française", "Université du Littoral Côte d'Opale", "Université du Littoral",
+        "Université Bretagne Sud", "Université de Bretagne-Sud", "Université Le Havre Normandie", "Université du Havre",
+        "Université de Pau et des Pays de l'Adour", "Université de Pau", "La Rochelle Université", "Université de La Rochelle",
+        "Université de Perpignan Via Domitia", "Université de Perpignan", "Université Gustave Eiffel", "Nîmes université",
+        "Université de Nîmes", "Université Paris sciences et lettres", "Université Paris Sciences et Lettres", "Université PSL",
+        "Institut national universitaire Jean-François Champollion", "Institut National Universitaire Jean-François Champollion"
+    ]
+    type_sans_sante_existants = [
+        e for e in liste_etab 
+        if (e in type_sans_sante_targets or any(t.lower() in e.lower() for t in ["orl\u00e9ans", "mayotte", "cergy", "pasquale paoli", "savoie mont blanc", "chamb\u00e9ry", "evry", "\u00e9vry", "polytechnique hauts-de-france", "valenciennes", "artois", "le mans universit\u00e9", "avignon", "haute-alsace", "toulon", "nouvelle-cal\u00e9donie", "polyn\u00e9sie", "littoral c\u00f4te d'opale", "bretagne sud", "le havre normandie", "pays de l'adour", "la rochelle", "via domitia", "gustave eiffel", "n\u00eeimes", "paris sciences et lettres", "psl", "champollion"]))
+        and not any(ex in e.lower() for ex in ["chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "lorraine", "lille", "bordeaux", "normale sup\u00e9rieure", "ens", "\u00e9cole normale", "comue"])
+    ]
+
+    # Configuration du Type Scientifique et/ou médicale
+    type_science_med_targets = [
+        "Université Claude Bernard - Lyon 1", "Université Lyon 1 - Claude Bernard", "Université Claude Bernard Lyon 1",
+        "Université Paris Cité", "Université Paris-Saclay", "Université de Rennes", "Université de Rennes 1", "Université Rennes-I",
+        "Université Toulouse III", "Université Toulouse III - Paul Sabatier", "Université de Toulouse", "Université Toulouse 3"
+    ]
+    type_science_med_existants = [
+        e for e in liste_etab 
+        if (e in type_science_med_targets or any(t.lower() in e.lower() for t in ["lyon 1", "lyon i", "paris cit\u00e9", "paris-saclay", "rennes 1", "rennes-i", "toulouse iii", "paul sabatier"]))
+        and not any(ex in e.lower() for ex in ["rennes 2", "lyon 2", "lyon 3", "toulouse 1", "toulouse 2", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale sup\u00e9rieure", "ens", "\u00e9cole normale", "comue"])
+    ]
+
+    # Configuration du Type Tertiaire - Droit et économie
+    type_droit_eco_targets = [
+        "Université Jean Moulin - Lyon 3", "Université Jean Moulin Lyon 3", "Université Lyon-III", "Université Lyon III",
+        "Université Paris 1 - Panthéon Sorbonne", "Université Paris-I", "Université Paris I", "Université Paris 1",
+        "Université Paris-Panthéon-Assas", "Université Panthéon-Assas", "Université Paris-II", "Université Paris II", "Université Paris 2",
+        "Université Toulouse Capitole", "Université Toulouse-I", "Université Toulouse I", "Université Toulouse 1 Capitole"
+    ]
+    type_droit_eco_existants = [
+        e for e in liste_etab 
+        if e in type_droit_eco_targets or any(t.lower() in e.lower() for t in ["jean moulin", "lyon 3", "panth\u00e9on sorbonne", "paris 1", "panth\u00e9on-assas", "paris-assas", "paris 2", "toulouse capitole", "toulouse 1"])
+        and not any(ex in e.lower() for ex in ["lyon 1", "lyon 2", "toulouse 2", "toulouse 3", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale sup\u00e9rieure", "ens", "\u00e9cole normale", "comue"])
+    ]
+
+    # Configuration du Type Tertiaire - Lettres et sciences humaines
+    type_lettres_targets = [
+        "Université Bordeaux Montaigne", "Université Bordeaux-III", "Université Bordeaux 3",
+        "Université Lumière - Lyon 2", "Université Lumière Lyon 2", "Université Lyon-II", "Université Lyon II",
+        "Université Paris 8", "Université Paris-VIII", "Université Paris VIII",
+        "Université Paris Nanterre", "Université Paris-X", "Université Paris 10",
+        "Université Rennes 2", "Université Rennes-II", "Université Rennes II",
+        "Université Sorbonne Nouvelle", "Université Paris-III", "Université Paris III",
+        "Université Toulouse - Jean Jaurès", "Université Toulouse II", "Université Toulouse-II",
+        "Université de Montpellier Paul-Valéry", "Université de Montpellier-Paul Valéry", "Université Montpellier-III", "Université Montpellier 3"
+    ]
+    type_lettres_existants = [
+        e for e in liste_etab 
+        if e in type_lettres_targets or any(t.lower() in e.lower() for t in ["bordeaux montaigne", "lumi\u00e8re - lyon 2", "paris 8", "vincennes", "nanterre", "paris 10", "rennes 2", "sorbonne nouvelle", "paris 3", "jean jaur\u00e8s", "toulouse 2", "paul-val\u00e9ry", "paul val\u00e9ry", "montpellier 3"])
+        and not any(ex in e.lower() for ex in ["lyon 1", "lyon 3", "toulouse 1", "toulouse 3", "montpellier 1", "bordeaux 1", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale sup\u00e9rieure", "ens", "\u00e9cole normale", "comue"])
+    ]
+
+# BLOC 2D
+    # --- RENDU DE L'INTERFACE DANS LA BARRE LATÉRALE ---
     st.sidebar.subheader("🚀 Raccourcis Alliances")
     if st.sidebar.button("🎓 Alliance Udice"):
         st.session_state.selected_etabs = udice_existants
@@ -173,6 +258,19 @@ if not df.empty:
         st.session_state.selected_etabs = groupe_1_existants
     if st.sidebar.button("🏫 Groupe II"):
         st.session_state.selected_etabs = groupe_2_existants
+
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🧬 Typologie des Établissements")
+    if st.sidebar.button("🩺 Pluridisciplinaire avec santé"):
+        st.session_state.selected_etabs = type_sante_existants
+    if st.sidebar.button("🍃 Pluridisciplinaire sans santé"):
+        st.session_state.selected_etabs = type_sans_sante_existants
+    if st.sidebar.button("🔬 Scientifique et/ou médicale"):
+        st.session_state.selected_etabs = type_science_med_existants
+    if st.sidebar.button("⚖️ Tertiaire - Droit et économie"):
+        st.session_state.selected_etabs = type_droit_eco_existants
+    if st.sidebar.button("📚 Tertiaire - Lettres et SHS"):
+        st.session_state.selected_etabs = type_lettres_existants
 
     st.sidebar.markdown("---")
     if st.sidebar.button("🔄 Réinitialiser la sélection", type="primary"):

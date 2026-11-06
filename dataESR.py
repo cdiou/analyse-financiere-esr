@@ -1,4 +1,3 @@
-# BLOC 1
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -7,12 +6,9 @@ import os
 import io
 from datetime import datetime
 
-# Configuration de la page en mode large avec icône d'onglet
 st.set_page_config(page_title="Indicateurs Financiers ESR", page_icon="📊", layout="wide")
-
 st.title("📊 Analyse Multi-Indicateurs des Opérateurs de l'ESR")
 
-# MISE À JOUR : Nouveau nom de fichier par défaut
 FICHIER_JSON = "fr-esr-operateurs-indicateurs-financiers.json"
 
 @st.cache_data
@@ -21,7 +17,6 @@ def load_api_json_local():
         try:
             with open(FICHIER_JSON, "r", encoding="utf-8") as f:
                 raw_data = json.load(f)
-            
             if isinstance(raw_data, list):
                 return pd.DataFrame(raw_data)
             elif isinstance(raw_data, dict) and "results" in raw_data:
@@ -30,29 +25,24 @@ def load_api_json_local():
                 st.error("Format de fichier non reconnu.")
                 return pd.DataFrame()
         except Exception as e:
-            st.error(f"Erreur lors de la lecture du fichier JSON : {e}")
+            st.error(f"Erreur : {e}")
             return pd.DataFrame()
     else:
-        st.info("👋 Bienvenue ! Veuillez glisser le fichier de données dans la barre latérale pour initialiser l'application.")
         return pd.DataFrame()
 
 df = load_api_json_local()
 
-# Affichage de la date de mise à jour basée sur le nouveau fichier
 if os.path.exists(FICHIER_JSON):
     timestamp_mod = os.path.getmtime(FICHIER_JSON)
     date_Fichier = datetime.fromtimestamp(timestamp_mod).strftime('%d/%m/%Y à %H:%M')
     st.write(f"📅 **Dernière mise à jour du fichier de données :** {date_Fichier}")
 else:
     st.write("📅 **Aucun fichier de données chargé actuellement.**")
+    st.info("👋 Bienvenue ! Veuillez glisser le fichier de données dans la barre latérale pour initialiser l'application.")
 
-# BLOC 2A
-# --- SYSTÈME DE MISE À JOUR PAR LE NAVIGATEUR ---
 st.sidebar.header("🔄 Mise à jour du fichier")
-
 url_ministere = "https://enseignementsup-recherche.gouv.fr"
 st.sidebar.link_button("🌐 1. Télécharger via le Navigateur", url_ministere)
-
 fichier_uploade = st.sidebar.file_uploader("2. Glissez le fichier JSON reçu ici :", type=["json"])
 
 if fichier_uploade is not None:
@@ -68,21 +58,9 @@ if fichier_uploade is not None:
 
 st.sidebar.markdown("---")
 
-if os.path.exists(FICHIER_JSON):
-    try:
-        with open(FICHIER_JSON, "r", encoding="utf-8") as f:
-            r_data = json.load(f)
-        df = pd.DataFrame(r_data if isinstance(r_data, list) else r_data.get("results", []))
-    except:
-        df = pd.DataFrame()
-
 if not df.empty:
     col_etab = "etablissement_lib"
     col_annee = "exercice"
-    
-    if "selected_etabs" not in st.session_state:
-        st.session_state.selected_etabs = []
-        
     df[col_annee] = pd.to_numeric(df[col_annee], errors='coerce')
     df = df.dropna(subset=[col_annee])
     df[col_annee] = df[col_annee].astype(int)
@@ -90,15 +68,38 @@ if not df.empty:
     st.sidebar.header("🎯 Filtres et Paramètres")
     liste_etab = sorted(df[col_etab].dropna().unique())
     
-    # Alliances Historiques
     udice_targets = ["Aix-Marseille Université", "Université d'Aix-Marseille", "Sorbonne Université", "Université Claude Bernard - Lyon 1", "Université Lyon 1 - Claude Bernard", "Université Côte d'Azur", "Université Grenoble Alpes", "Université Paris Cité", "Université Paris sciences et lettres", "Université Paris Sciences et Lettres", "Université PSL", "Université de Bordeaux", "Université de Lorraine", "Université de Montpellier", "Université de Strasbourg", "Université Paris-Saclay"]
     udice_existants = [e for e in liste_etab if any(target.lower() in e.lower() for target in udice_targets) and not "paul" in e.lower()]
 
     initiative_targets = ["CY Cergy Paris Université", "Université de Cergy-Pontoise", "Université Clermont Auvergne", "Université Gustave Eiffel", "Université de Lille", "Université de Nantes", "Nantes Université", "Université de Pau et des Pays de l'Adour", "Université de Pau"]
     initiative_existants = [e for e in liste_etab if any(target.lower() in e.lower() for target in initiative_targets)]
 	
-# BLOC 2B
-    # Configuration Strict du Groupe Supérieur
+    auref_targets = [
+        "Artois", "Angers", "Avignon", "Bordeaux Montaigne", "Bordeaux-Montaigne", 
+        "Bretagne Sud", "Bretagne-Sud", "Caen Normandie", "Caen", "Corse", "Pasquale Paoli", 
+        "Champollion", "Guyane", "Haute Alsace", "Haute-Alsace", "Mulhouse", "Polytechnique Hauts-de-France", 
+        "Polytechnique des Hauts-de-France", "La Rochelle", "Le Havre", "Le Mans", "Limoges", 
+        "Lumière Lyon 2", "Lumière - Lyon 2", "Jean Moulin Lyon 3", "Jean Moulin - Lyon 3", 
+        "Mayotte", "Paul Valéry", "Paul-Valéry", "Montpellier 3", "Nîmes", "Unîmes", 
+        "Paris 8", "Vincennes", "Orléans", "Pau", "Pays de l'Adour", "Perpignan", "Via Domitia", 
+        "Picardie", "Jules Verne", "Poitiers", "Reims", "Champagne-Ardenne", "Rennes 2", 
+        "Rouen", "Savoie Mont-Blanc", "Savoie Mont Blanc", "Jean Monnet", "Saint-Étienne", 
+        "Saint-Etienne", "Toulon", "Tours", "Littoral", "Paris Nanterre", "Paris 10", "CNAM"
+    ]
+    auref_exclusions = [
+        "comue", 
+        "institut national des sciences appliquées", "insa", 
+        "école nationale supérieure", 
+        "école nationale d'ingénieur", "eni", 
+        "toulouse capitole",
+        "toulouse iii", "paul sabatier"
+    ]
+    auref_existants = [
+        e for e in liste_etab 
+        if any(target.lower() in e.lower() for target in auref_targets) 
+        and not any(excl in e.lower() for excl in auref_exclusions)
+    ]
+
     sup_strict_targets = [
         "Aix-Marseille Université", "Université d'Aix-Marseille", "Sorbonne Université",
         "Université Claude Bernard - Lyon 1", "Université Lyon 1 - Claude Bernard", "Université Grenoble Alpes",
@@ -106,12 +107,8 @@ if not df.empty:
         "Université de Lorraine", "Université de Montpellier", "Université de Strasbourg",
         "Université Toulouse III", "Université Toulouse III - Paul Sabatier", "Université de Toulouse"
     ]
-    groupe_sup_existants = [
-        e for e in liste_etab 
-        if e in sup_strict_targets or any(t.lower() in e.lower() for t in ["toulouse iii", "paul sabatier"])
-    ]
+    groupe_sup_existants = [e for e in liste_etab if e in sup_strict_targets or any(t.lower() in e.lower() for t in ["toulouse iii", "paul sabatier"])]
 
-    # Configuration Strict du Groupe I
     g1_strict_targets = [
         "CY Cergy Paris Université", "Université de Cergy-Pontoise", "Université d'Angers",
         "Université de Picardie Jules Verne", "Université d'Amiens", "Université de Franche-Comté", 
@@ -132,7 +129,6 @@ if not df.empty:
         and not any(ex in e.lower() for ex in ["institut national des sciences appliquées", "insa"])
     ]
 
-    # Configuration Strict du Groupe II
     g2_strict_targets = [
         "Université des Antilles", "Université d'Artois", "Université d'Avignon", "Université Bordeaux Montaigne", 
         "Université Bordeaux-III", "Université Bordeaux 3", "Université de Bretagne Sud", "Université de Bretagne-Sud",
@@ -158,8 +154,6 @@ if not df.empty:
         and not any(ex in e.lower() for ex in ["institut national des sciences appliquées", "insa", "chimie", "ingénieur", "sciences po", "centrale"])
     ]
 
-# BLOC 2C
-    # Configuration du Type Pluridisciplinaire avec santé
     type_sante_targets = [
         "Université de Poitiers", "Université Clermont Auvergne", "Université de Bretagne Occidentale", "Université de Brest",
         "Université Paris-Est Créteil", "Université de Caen Normandie", "Université de Caen", "Université des Antilles",
@@ -172,14 +166,12 @@ if not df.empty:
         "Université Sorbonne Paris Nord", "Université Paris-XIII", "Université Paris 13", "Université de Bordeaux", "Sorbonne Université",
         "Université de Lille", "Université Côte d'Azur", "Université Grenoble Alpes", "Université de Lorraine"
     ]
-    # SÉCURITÉ : Exclusion chirurgicale de TOUTES les Écoles Nationales Supérieures (ENS), Observatoires, BNU et COMUE
     type_sante_existants = [
         e for e in liste_etab 
-        if (e in type_sante_targets or any(t.lower() in e.lower() for t in ["poitiers", "clermont auvergne", "bretagne occidentale", "cr\u00e9teil", "caen normandie", "antilles", "tours", "limoges", "montpellier", "versailles", "aix-marseille", "angers", "reims", "picardie", "bourgogne", "strasbourg", "franche-comt\u00e9", "jean monnet", "nantes", "rouen", "r\u00e9union", "paris nord", "bordeaux", "sorbonne universit\u00e9", "lille", "c\u00f4te d'azur", "grenoble alpes", "lorraine"]))
-        and not any(ex in e.lower() for ex in ["paul-val\u00e9ry", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale sup\u00e9rieure", "ens", "\u00e9cole normale", "biblioth\u00e8que", "bnu", "comue", "observatoire", "sup\u00e9rieur", "g\u00e9ologie", "mines", "ponts", "a\u00e9ronautique"])
+        if (e in type_sante_targets or any(t.lower() in e.lower() for t in ["poitiers", "clermont auvergne", "bretagne occidentale", "créteil", "caen normandie", "antilles", "tours", "limoges", "montpellier", "versailles", "aix-marseille", "angers", "reims", "picardie", "bourgogne", "strasbourg", "franche-comté", "jean monnet", "nantes", "rouen", "réunion", "paris nord", "bordeaux", "sorbonne université", "lille", "côte d'azur", "grenoble alpes", "lorraine"]))
+        and not any(ex in e.lower() for ex in ["paul-valéry", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale supérieure", "ens", "école normale", "bibliothèque", "bnu", "comue", "observatoire", "supérieur", "géologie", "mines", "ponts", "aéronautique"])
     ]
 
-    # Configuration du Type Pluridisciplinaire sans santé
     type_sans_sante_targets = [
         "Université d'Orléans", "Centre universitaire de formation et de recherche de Mayotte", "CUFR de Mayotte",
         "CY Cergy Paris Université", "Université de Cergy-Pontoise", "Université de Corse Pasquale Paoli", "Université de Corse",
@@ -196,11 +188,10 @@ if not df.empty:
     ]
     type_sans_sante_existants = [
         e for e in liste_etab 
-        if (e in type_sans_sante_targets or any(t.lower() in e.lower() for t in ["orl\u00e9ans", "mayotte", "cergy", "pasquale paoli", "savoie mont blanc", "chamb\u00e9ry", "evry", "\u00e9vry", "polytechnique hauts-de-france", "valenciennes", "artois", "le mans universit\u00e9", "avignon", "haute-alsace", "toulon", "nouvelle-cal\u00e9donie", "polyn\u00e9sie", "littoral c\u00f4te d'opale", "bretagne sud", "le havre normandie", "pays de l'adour", "la rochelle", "via domitia", "gustave eiffel", "n\u00eeimes", "paris sciences et lettres", "psl", "champollion"]))
-        and not any(ex in e.lower() for ex in ["chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "lorraine", "lille", "bordeaux", "normale sup\u00e9rieure", "ens", "\u00e9cole normale", "comue"])
+        if (e in type_sans_sante_targets or any(t.lower() in e.lower() for t in ["orléans", "mayotte", "cergy", "pasquale paoli", "savoie mont blanc", "chambéry", "evry", "évry", "polytechnique hauts-de-france", "valenciennes", "artois", "le mans université", "avignon", "haute-alsace", "toulon", "nouvelle-calédonie", "polynésie", "littoral côte d'opale", "bretagne sud", "le havre normandie", "pays de l'adour", "la rochelle", "via domitia", "gustave eiffel", "nîimes", "paris sciences et lettres", "psl", "champollion"]))
+        and not any(ex in e.lower() for ex in ["chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "lorraine", "lille", "bordeaux", "normale supérieure", "ens", "école normale", "comue"])
     ]
 
-    # Configuration du Type Scientifique et/ou médicale
     type_science_med_targets = [
         "Université Claude Bernard - Lyon 1", "Université Lyon 1 - Claude Bernard", "Université Claude Bernard Lyon 1",
         "Université Paris Cité", "Université Paris-Saclay", "Université de Rennes", "Université de Rennes 1", "Université Rennes-I",
@@ -208,11 +199,10 @@ if not df.empty:
     ]
     type_science_med_existants = [
         e for e in liste_etab 
-        if (e in type_science_med_targets or any(t.lower() in e.lower() for t in ["lyon 1", "lyon i", "paris cit\u00e9", "paris-saclay", "rennes 1", "rennes-i", "toulouse iii", "paul sabatier"]))
-        and not any(ex in e.lower() for ex in ["rennes 2", "lyon 2", "lyon 3", "toulouse 1", "toulouse 2", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale sup\u00e9rieure", "ens", "\u00e9cole normale", "comue"])
+        if (e in type_science_med_targets or any(t.lower() in e.lower() for t in ["lyon 1", "lyon i", "paris cité", "paris-saclay", "rennes 1", "rennes-i", "toulouse iii", "paul sabatier"]))
+        and not any(ex in e.lower() for ex in ["rennes 2", "lyon 2", "lyon 3", "toulouse 1", "toulouse 2", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale supérieure", "ens", "école normale", "comue"])
     ]
 
-    # Configuration du Type Tertiaire - Droit et économie
     type_droit_eco_targets = [
         "Université Jean Moulin - Lyon 3", "Université Jean Moulin Lyon 3", "Université Lyon-III", "Université Lyon III",
         "Université Paris 1 - Panthéon Sorbonne", "Université Paris-I", "Université Paris I", "Université Paris 1",
@@ -221,11 +211,10 @@ if not df.empty:
     ]
     type_droit_eco_existants = [
         e for e in liste_etab 
-        if e in type_droit_eco_targets or any(t.lower() in e.lower() for t in ["jean moulin", "lyon 3", "panth\u00e9on sorbonne", "paris 1", "panth\u00e9on-assas", "paris-assas", "paris 2", "toulouse capitole", "toulouse 1"])
-        and not any(ex in e.lower() for ex in ["lyon 1", "lyon 2", "toulouse 2", "toulouse 3", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale sup\u00e9rieure", "ens", "\u00e9cole normale", "comue"])
+        if e in type_droit_eco_targets or any(t.lower() in e.lower() for t in ["jean moulin", "lyon 3", "panthéon sorbonne", "paris 1", "panthéon-assas", "paris-assas", "paris 2", "toulouse capitole", "toulouse 1"])
+        and not any(ex in e.lower() for ex in ["lyon 1", "lyon 2", "toulouse 2", "toulouse 3", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale supérieure", "ens", "école normale", "comue"])
     ]
 
-    # Configuration du Type Tertiaire - Lettres et sciences humaines
     type_lettres_targets = [
         "Université Bordeaux Montaigne", "Université Bordeaux-III", "Université Bordeaux 3",
         "Université Lumière - Lyon 2", "Université Lumière Lyon 2", "Université Lyon-II", "Université Lyon II",
@@ -238,67 +227,58 @@ if not df.empty:
     ]
     type_lettres_existants = [
         e for e in liste_etab 
-        if e in type_lettres_targets or any(t.lower() in e.lower() for t in ["bordeaux montaigne", "lumi\u00e8re - lyon 2", "paris 8", "vincennes", "nanterre", "paris 10", "rennes 2", "sorbonne nouvelle", "paris 3", "jean jaur\u00e8s", "toulouse 2", "paul-val\u00e9ry", "paul val\u00e9ry", "montpellier 3"])
-        and not any(ex in e.lower() for ex in ["lyon 1", "lyon 3", "toulouse 1", "toulouse 3", "montpellier 1", "bordeaux 1", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale sup\u00e9rieure", "ens", "\u00e9cole normale", "comue"])
+        if e in type_lettres_targets or any(t.lower() in e.lower() for t in ["bordeaux montaigne", "lumière - lyon 2", "paris 8", "vincennes", "nanterre", "paris 10", "rennes 2", "sorbonne nouvelle", "paris 3", "jean jaurès", "toulouse 2", "paul-valéry", "paul valéry", "montpellier 3"])
+        and not any(ex in e.lower() for ex in ["lyon 1", "lyon 3", "toulouse 1", "toulouse 3", "montpellier 1", "bordeaux 1", "chimie", "sciences po", "centrale", "technologie", "institut national des sciences appliquées", "insa", "normale supérieure", "ens", "école normale", "comue"])
     ]
 
-# BLOC 2D
-    # --- RENDU DE L'INTERFACE DANS LA BARRE LATÉRALE ---
-    st.sidebar.subheader("🚀 Raccourcis Alliances")
-    if st.sidebar.button("🎓 Alliance Udice"):
-        st.session_state.selected_etabs = udice_existants
-    if st.sidebar.button("✨ Alliance L'Initiative"):
-        st.session_state.selected_etabs = initiative_existants
+    etabs_groupes = set()
+    st.sidebar.subheader("🚀 Alliances d'universités")
+    if st.sidebar.checkbox("🎓 Alliance Udice"):
+        etabs_groupes.update(udice_existants)
+    if st.sidebar.checkbox("✨ Alliance L'Initiative"):
+        etabs_groupes.update(initiative_existants)
+    if st.sidebar.checkbox("🏫 Alliance Auref"):
+        etabs_groupes.update(auref_existants)
         
-    st.sidebar.markdown("---")
     st.sidebar.subheader("🏛️ Groupes - Code de l'éducation")
-    if st.sidebar.button("💎 Groupe Supérieur"):
-        st.session_state.selected_etabs = groupe_sup_existants
-    if st.sidebar.button("🏢 Groupe I"):
-        st.session_state.selected_etabs = groupe_1_existants
-    if st.sidebar.button("🏫 Groupe II"):
-        st.session_state.selected_etabs = groupe_2_existants
+    if st.sidebar.checkbox("💎 Groupe Supérieur"):
+        etabs_groupes.update(groupe_sup_existants)
+    if st.sidebar.checkbox("🏢 Groupe I"):
+        etabs_groupes.update(groupe_1_existants)
+    if st.sidebar.checkbox("🏫 Groupe II"):
+        etabs_groupes.update(groupe_2_existants)
 
-    st.sidebar.markdown("---")
     st.sidebar.subheader("🧬 Typologie des Établissements")
-    if st.sidebar.button("🩺 Pluridisciplinaire avec santé"):
-        st.session_state.selected_etabs = type_sante_existants
-    if st.sidebar.button("🍃 Pluridisciplinaire sans santé"):
-        st.session_state.selected_etabs = type_sans_sante_existants
-    if st.sidebar.button("🔬 Scientifique et/ou médicale"):
-        st.session_state.selected_etabs = type_science_med_existants
-    if st.sidebar.button("⚖️ Tertiaire - Droit et économie"):
-        st.session_state.selected_etabs = type_droit_eco_existants
-    if st.sidebar.button("📚 Tertiaire - Lettres et SHS"):
-        st.session_state.selected_etabs = type_lettres_existants
+    if st.sidebar.checkbox("🩺 Pluridisciplinaire avec santé"):
+        etabs_groupes.update(type_sante_existants)
+    if st.sidebar.checkbox("🍃 Pluridisciplinaire sans santé"):
+        etabs_groupes.update(type_sans_sante_existants)
+    if st.sidebar.checkbox("🔬 Scientifique et/ou médicale"):
+        etabs_groupes.update(type_science_med_existants)
+    if st.sidebar.checkbox("⚖️ Tertiaire - Droit et économie"):
+        etabs_groupes.update(type_droit_eco_existants)
+    if st.sidebar.checkbox("📚 Tertiaire - Lettres et SHS"):
+        etabs_groupes.update(type_lettres_existants)
 
     st.sidebar.markdown("---")
-    if st.sidebar.button("🔄 Réinitialiser la sélection", type="primary"):
-        st.session_state.selected_etabs = []
-
-    st.sidebar.markdown("---")
-    etabs_selectionnes = st.sidebar.multiselect("Sélection manuelle / ajustement :", options=liste_etab, key="selected_etabs")
+    liste_pre_selectionnee = sorted(list(etabs_groupes))
+    etabs_selectionnes = st.sidebar.multiselect("Sélection manuelle / ajustement :", options=liste_etab, default=liste_pre_selectionnee)
     
     st.sidebar.markdown("---")
     st.sidebar.subheader("📅 Période d'analyse")
-    min_annee = int(df[col_annee].min())
-    max_annee = int(df[col_annee].max())
-    
+    min_annee, max_annee = int(df[col_annee].min()), int(df[col_annee].max())
     intervalle_annees = st.sidebar.slider("Sélectionner l'intervalle d'années :", min_value=min_annee, max_value=max_annee, value=(min_annee, max_annee), step=1)
     annee_debut, annee_fin = intervalle_annees
 
     liste_annees_filtrees = sorted([a for a in df[col_annee].unique() if annee_debut <= a <= annee_fin], reverse=True)
     options_selectbox = [str(a) for a in liste_annees_filtrees]
-    if not options_selectbox:
-        options_selectbox = [str(a) for a in sorted(df[col_annee].unique(), reverse=True)]
-    
+    if not options_selectbox: options_selectbox = [str(a) for a in sorted(df[col_annee].unique(), reverse=True)]
     annee_selectionnee = st.sidebar.selectbox("Exercice cible pour les comparatifs bas :", options=options_selectbox, index=0 if options_selectbox else None)
 
     st.sidebar.markdown("---")
     st.sidebar.subheader("⚙️ Options du graphique global")
     nb_top = st.sidebar.slider("Taille du Top National :", min_value=5, max_value=100, value=15, step=5)
 
-# BLOC 3    
     exclusions = [col_annee, col_etab, "uai_identifiant", "code_de_la_commune", "code_de_l_academie", "code_de_la_region", "rce", "vague", "commune", "academie", "region", "etablissement_id_paysage", "source"]
     colonnes_numeriques = df.select_dtypes(include=['number']).columns.tolist()
     indicateurs_presents = [c for c in colonnes_numeriques if c not in exclusions]
@@ -306,22 +286,14 @@ if not df.empty:
     
     if indicateurs_presents:
         st.subheader("📊 Sélection des indicateurs de performance")
-        
-        # Définition de l'indicateur cible par défaut
         indicateur_par_defaut = "resultat_net_comptable"
-        valeurs_par_defaut = [indicateur_par_defaut] if indicateur_par_defaut in indicateurs_presents else [indicateurs_presents[0]]
-        
-        indicateurs_choisis = st.multiselect(
-            "Sélectionnez UN ou DEUX indicateurs financiers à croiser :", 
-            options=indicateurs_presents, 
-            default=valeurs_par_defaut, 
-            format_func=lambda x: labels_propres[x]
-        )
+        valeurs_par_defaut = [indicateur_par_defaut] if indicateur_par_defaut in indicateurs_presents else [indicateurs_presents]
+        indicateurs_choisis = st.multiselect("Sélectionnez UN ou DEUX indicateurs financiers à croiser :", options=indicateurs_presents, default=valeurs_par_defaut, format_func=lambda x: labels_propres[x])
         
         if not indicateurs_choisis:
             st.warning("⚠️ Veuillez sélectionner au moins un indicateur financier pour afficher les graphiques.")
         elif len(indicateurs_choisis) > 2:
-            st.error("❌ Limitez votre sélection à deux indicateurs maximum pour préserver la visibilité.")
+            st.error("❌ Limitez votre sélection à deux indicateurs maximum.")
         else:
             st.write("---")
             st.write(f"## ⏱️ Évolution Historique Multilatérale ({annee_debut} - {annee_fin})")
@@ -330,26 +302,17 @@ if not df.empty:
                 df_evt[col_annee] = df_evt[col_annee].astype(str)
                 df_melted = df_evt.melt(id_vars=[col_etab, col_annee], value_vars=indicateurs_choisis, var_name="Indicateur", value_name="Montant")
                 df_melted["Indicateur"] = df_melted["Indicateur"].map(labels_propres)
-                
                 if len(etabs_selectionnes) == 1:
                     fig_line = px.line(df_melted, x=col_annee, y="Montant", color="Indicateur", title=f"Suivi annuel pour {etabs_selectionnes}", markers=True)
                 else:
-                    fig_line = px.line(df_melted, x=col_annee, y="Montant", color=col_etab, line_dash="Indicateur",
-                                       title="Comparatif historique croisé (Continu = 1er indicateur, Pointillé = 2e indicateur)", markers=True)
+                    fig_line = px.line(df_melted, x=col_annee, y="Montant", color=col_etab, line_dash="Indicateur", title="Comparatif historique croisé", markers=True)
                 st.plotly_chart(fig_line, use_container_width=True)
             else:
                 st.info("💡 Sélectionnez des établissements à gauche pour tracer les courbes.")
                     
-# BLOC 4    
             st.write("---")
-            
-            # Ajustement dynamique du titre avec l'année sélectionnée explicitement
-            if 'annee_selectionnee' in locals() and annee_selectionnee:
+            if annee_selectionnee:
                 st.write(f"## 🏛️ Analyses Comparatives (Année {annee_selectionnee})")
-            else:
-                st.write("## 🏛️ Analyses Comparatives")
-            
-            if 'annee_selectionnee' in locals() and annee_selectionnee:
                 graphe_col1, graphe_col2 = st.columns(2)
                 df_annee_base = df[df[col_annee] == int(annee_selectionnee)]
                 
@@ -363,41 +326,38 @@ if not df.empty:
                             fig_bar_sel = px.bar(df_sel_melted, x="Montant", y=col_etab, color="Indicateur", barmode="group", orientation='h', title="Structure interne du groupe")
                             fig_bar_sel.update_layout(yaxis={'categoryorder':'total ascending'}, height=300 + (len(df_selection_clean) * 25))
                             st.plotly_chart(fig_bar_sel, use_container_width=True)
-                        else:
-                            st.warning("Aucune donnée disponible.")
-                    else:
-                        st.info("💡 Sélectionnez des établissements pour voir le classement personnalisé.")
+                        else: st.warning("Aucune donnée disponible.")
+                    else: st.info("💡 Sélectionnez des établissements.")
                 
                 with graphe_col2:
                     st.write("### 🌐 Contexte National Global")
                     df_global_clean = df_annee_base.dropna(subset=indicateurs_choisis)
-                    top_df = df_global_clean.nlargest(nb_top, indicateurs_choisis)
-                    df_glob_melted = top_df.melt(id_vars=[col_etab], value_vars=indicateurs_choisis, var_name="Indicateur", value_name="Montant").dropna()
-                    df_glob_melted["Indicateur"] = df_glob_melted["Indicateur"].map(labels_propres)
-                    if not df_glob_melted.empty:
-                        fig_bar_glob = px.bar(df_glob_melted, x="Montant", y=col_etab, color="Indicateur", barmode="group", orientation='h', title=f"Top National basé sur le premier indicateur")
-                        fig_bar_glob.update_layout(yaxis={'categoryorder':'total ascending'}, height=300 + (nb_top * 20))
-                        st.plotly_chart(fig_bar_glob, use_container_width=True)
-                    else:
-                        st.warning("Aucune donnée disponible.")
-            else:
-                st.info("💡 Veuillez charger un fichier de données pour afficher les graphiques comparatifs.")
+                    if not df_global_clean.empty:
+                        top_df = df_global_clean.nlargest(nb_top, indicateurs_choisis)
+                        df_glob_melted = top_df.melt(id_vars=[col_etab], value_vars=indicateurs_choisis, var_name="Indicateur", value_name="Montant").dropna()
+                        df_glob_melted["Indicateur"] = df_glob_melted["Indicateur"].map(labels_propres)
+                        if not df_glob_melted.empty:
+                            fig_bar_glob = px.bar(df_glob_melted, x="Montant", y=col_etab, color="Indicateur", barmode="group", orientation='h', title=f"Top National")
+                            fig_bar_glob.update_layout(yaxis={'categoryorder':'total ascending'}, height=300 + (nb_top * 20))
+                            st.plotly_chart(fig_bar_glob, use_container_width=True)
+                        else: st.warning("Aucune donnée disponible.")
+                    else: st.warning("Aucune donnée disponible pour cette année.")
+            else: st.info("💡 Veuillez charger un fichier de données.")
                     
             st.write("---")
             df_table = df[(df[col_annee] >= annee_debut) & (df[col_annee] <= annee_fin)].copy()
-            if etabs_selectionnes:
-                df_table = df_table[df_table[col_etab].isin(etabs_selectionnes)]
+            if etabs_selectionnes: df_table = df_table[df_table[col_etab].isin(etabs_selectionnes)]
             
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                df_table.to_excel(writer, index=False, sheet_name='Données Filtrées')
-            buffer.seek(0)
-            
-            st.download_button(label="📥 Télécharger la sélection actuelle au format Excel", data=buffer, file_name="indicateurs_financiers_filtres.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            try:
+                buffer = io.BytesIO()
+                with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                    df_table.to_excel(writer, index=False, sheet_name='Données Filtrées')
+                buffer.seek(0)
+                st.download_button(label="📥 Télécharger la sélection actuelle au format Excel", data=buffer, file_name="indicateurs_financiers_filtres.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            except ImportError: st.warning("⚠️ Installation requise de openpyxl.")
+                
             with st.expander("👀 Explorer la table brute des données"):
                 df_table[col_annee] = df_table[col_annee].astype(str)
                 st.dataframe(df_table)
-    else:
-        st.warning("Aucun indicateur financier majeur n'a pu être extrait.")
-else:
-    st.error("Le fichier de données est vide ou introuvable.")
+    else: st.warning("Aucun indicateur trouvé.")
+else: st.error("Le fichier de données est vide ou introuvable.")

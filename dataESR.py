@@ -278,6 +278,7 @@ if not df.empty:
     st.sidebar.markdown("---")
     st.sidebar.subheader("⚙️ Options du graphique global")
     nb_top = st.sidebar.slider("Taille du Top National :", min_value=5, max_value=100, value=15, step=5)
+    nb_flop = st.sidebar.slider("Taille du Flop National :", min_value=5, max_value=100, value=15, step=5)
 
     exclusions = [col_annee, col_etab, "uai_identifiant", "code_de_la_commune", "code_de_l_academie", "code_de_la_region", "rce", "vague", "commune", "academie", "region", "etablissement_id_paysage", "source"]
     colonnes_numeriques = df.select_dtypes(include=['number']).columns.tolist()
@@ -333,14 +334,27 @@ if not df.empty:
                     st.write("### 🌐 Contexte National Global")
                     df_global_clean = df_annee_base.dropna(subset=indicateurs_choisis)
                     if not df_global_clean.empty:
-                        top_df = df_global_clean.nlargest(nb_top, indicateurs_choisis)
-                        df_glob_melted = top_df.melt(id_vars=[col_etab], value_vars=indicateurs_choisis, var_name="Indicateur", value_name="Montant").dropna()
-                        df_glob_melted["Indicateur"] = df_glob_melted["Indicateur"].map(labels_propres)
-                        if not df_glob_melted.empty:
-                            fig_bar_glob = px.bar(df_glob_melted, x="Montant", y=col_etab, color="Indicateur", barmode="group", orientation='h', title=f"Top National")
-                            fig_bar_glob.update_layout(yaxis={'categoryorder':'total ascending'}, height=300 + (nb_top * 20))
-                            st.plotly_chart(fig_bar_glob, use_container_width=True)
-                        else: st.warning("Aucune donnée disponible.")
+                        tab_top, tab_flop = st.tabs(["📈 Top National", "📉 Flop National"])
+                        
+                        with tab_top:
+                            top_df = df_global_clean.nlargest(nb_top, indicateurs_choisis)
+                            df_glob_melted = top_df.melt(id_vars=[col_etab], value_vars=indicateurs_choisis, var_name="Indicateur", value_name="Montant").dropna()
+                            df_glob_melted["Indicateur"] = df_glob_melted["Indicateur"].map(labels_propres)
+                            if not df_glob_melted.empty:
+                                fig_bar_glob = px.bar(df_glob_melted, x="Montant", y=col_etab, color="Indicateur", barmode="group", orientation='h', title=f"Top National (Plus hautes valeurs)")
+                                fig_bar_glob.update_layout(yaxis={'categoryorder':'total ascending'}, height=300 + (nb_top * 20))
+                                st.plotly_chart(fig_bar_glob, use_container_width=True)
+                            else: st.warning("Aucune donnée disponible.")
+                            
+                        with tab_flop:
+                            flop_df = df_global_clean.nsmallest(nb_flop, indicateurs_choisis)
+                            df_flop_melted = flop_df.melt(id_vars=[col_etab], value_vars=indicateurs_choisis, var_name="Indicateur", value_name="Montant").dropna()
+                            df_flop_melted["Indicateur"] = df_flop_melted["Indicateur"].map(labels_propres)
+                            if not df_flop_melted.empty:
+                                fig_bar_flop = px.bar(df_flop_melted, x="Montant", y=col_etab, color="Indicateur", barmode="group", orientation='h', title=f"Flop National (Plus basses valeurs)")
+                                fig_bar_flop.update_layout(yaxis={'categoryorder':'total descending'}, height=300 + (nb_flop * 20))
+                                st.plotly_chart(fig_bar_flop, use_container_width=True)
+                            else: st.warning("Aucune donnée disponible.")
                     else: st.warning("Aucune donnée disponible pour cette année.")
             else: st.info("💡 Veuillez charger un fichier de données.")
                     

@@ -41,8 +41,11 @@ else:
     st.info("👋 Bienvenue ! Veuillez glisser le fichier de données dans la barre latérale pour initialiser l'application.")
 
 st.sidebar.header("🔄 Mise à jour du fichier")
-url_ministere = "https://enseignementsup-recherche.gouv.fr"
-st.sidebar.link_button("🌐 1. Télécharger via le Navigateur", url_ministere)
+
+# MISE À JOUR : Configuration de l'URL d'export JSON direct demandée
+url_json_direct = "https://data.enseignementsup-recherche.gouv.fr/api/explore/v2.1/catalog/datasets/fr-esr-operateurs-indicateurs-financiers/exports/json/?lang=fr&timezone=Europe%2FParis"
+st.sidebar.link_button("🌐 1. Télécharger via le Navigateur", url_json_direct)
+
 fichier_uploade = st.sidebar.file_uploader("2. Glissez le fichier JSON reçu ici :", type=["json"])
 
 if fichier_uploade is not None:
